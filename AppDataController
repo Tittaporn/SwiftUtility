@@ -20,11 +20,7 @@ class AppDataController {
     let deviceId : String = UIDevice.current.identifierForVendor?.uuidString ?? "" // ==> unitId
     let deviceManufacturer: String = "Apple"
     let deviceModel : String = UIDevice.current.modelName
-    var operatorInfo: OperatorInformation?
     var user: User?
-    var operatorId : String?
-    var username : String? // ==> userId
-    var propId: String?
     var didUserLogout: Bool = false
     var didEnterEnterForeground = false
     var baseURL: String?
