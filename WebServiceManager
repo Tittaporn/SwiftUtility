@@ -1,0 +1,210 @@
+
+//  WebServiceManager.swift
+
+
+import Foundation
+
+class WebServiceManager {
+    // MARK: - Properties
+    static let shared = WebServiceManager()
+    static let baseURL = AppDataController.shared.baseURL ?? ""
+    let log = LogController.shared
+   
+    // MARK: - GET OR FETCH DATA FROM THE SERVER
+    func get<T: Decodable>(endpoint: URL?, completion: @escaping (Result<T, NetworkError>) -> Void) {
+        guard let url = endpoint else {
+            completion(.failure(.invalidURL))
+            return
+        }
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                return completion(.failure(.thrownError(error)))
+            }
+            if let response = response as? HTTPURLResponse {
+                self.log.logGetResponseCode(response: response, taskOf: "\(String(describing: endpoint))", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+            }
+            guard let data = data else {return completion(.failure(.noData))}
+            print(String(data: data, encoding: .utf8)!)
+            do {
+                let nReturnVal = try JSONDecoder().decode(T.self, from: data)
+                print()
+                completion(.success(nReturnVal))
+            } catch {
+                completion(.failure(.unableToDecode))
+            }
+        }.resume()
+    }
+    
+    func getApiSynchronous<T: Codable>(endpoint: URL?) -> T? {
+        var nReturnT: T? = nil
+        guard let url = endpoint else {
+            log.logNetworkError(error: NetworkError.invalidURL, taskOf: "\(String(describing: endpoint))", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+            return nil
+        }
+        log.logGetFinalURL(url: url, urlOf: "", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+        let request = URLRequest(url: url)
+        let (data, response, error) = URLSession.shared.synchronousDataTask(urlrequest: request)
+        if let error = error {
+            log.logNetworkError(error: NetworkError.thrownError(error), taskOf:  "\(url)", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+        }
+        if let response = response as? HTTPURLResponse {
+            log.logGetResponseCode(response: response, taskOf: "\(url)", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+        }
+        if let data = data {
+            do {
+                let nReturnVal = try JSONDecoder().decode(T.self, from: data)
+                log.logJsonDecode(jsonBody: data, taskOf: "\(url)", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+                nReturnT = nReturnVal
+            } catch {
+                log.logNetworkError(error: NetworkError.unableToDecode, taskOf:  "\(url)", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+            }
+        } else {
+            log.logNetworkError(error: NetworkError.noData, taskOf:  "\(url)", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+        }
+        return nReturnT
+    }
+    
+    // MARK: - POST OR SAVE DATA TO THE SERVER
+    func post<T: Codable>(endpoint: URL?, type: T, completion: @escaping (Result<T, NetworkError>) -> Void)  {
+        guard let url = endpoint else {
+            completion(.failure(.invalidURL))
+            return
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        do {
+            let jsonBody = try JSONEncoder().encode(type)
+            request.httpBody = jsonBody
+            log.logJsonEncode(jsonBody: jsonBody, taskOf: "\(String(describing: endpoint))", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+        } catch {
+            completion(.failure(.unableToEncode))
+        }
+        URLSession.shared.dataTask(with: request) { (data, response, error) in
+            if let error = error {
+                completion(.failure(.thrownError(error)))
+            }
+            if let response = response as? HTTPURLResponse{
+                self.log.logPostResponseCode(response: response, taskOf: "\(String(describing: endpoint))", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+            }
+            guard let data = data else {return completion(.failure(.noData))}
+            do {
+                let nReturnVal = try JSONDecoder().decode(T.self, from: data)
+                self.log.logJsonDecode(jsonBody: data, taskOf: "\(String(describing: endpoint))", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+                completion(.success(nReturnVal))
+            } catch {
+                completion(.failure(.unableToDecode))
+            }
+        }.resume()
+    }
+    
+    // MARK: - Post Asynchronous With Params
+    private func getPostStringWith(params:[String:Any]) -> String {
+        var data = [String]()
+        for(key, value) in params {
+            data.append(key + "=\(value)")
+        }
+        return data.map { String($0) }.joined(separator: "&")
+    }
+    
+    func postWithParams(endpoint: URL?, params:[String:Any], completion: @escaping (Result<String, NetworkError>) -> Void)  {
+        guard let url = endpoint else {
+            completion(.failure(.invalidURL))
+            return
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        let postString = self.getPostStringWith(params: params)
+        request.httpBody = postString.data(using: .utf8)
+        URLSession.shared.dataTask(with: request) { (data, response, error) in
+            if let error = error {
+                completion(.failure(.thrownError(error)))
+            }
+            if let response = response as? HTTPURLResponse {
+                self.log.logPostResponseCode(response: response, taskOf: "\(String(describing: endpoint))", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+            }
+            guard let data = data else {return completion(.failure(.noData))}
+            if let nReturnString = String(data: data, encoding: .utf8) {
+                completion(.success(nReturnString))
+            } else {
+                completion(.failure(.unableToDecode))
+            }
+        }.resume()
+    }
+    
+    func postApiSynchronous<T: Codable>(endpoint: URL?, type: T) -> T? {
+        guard let url = endpoint else {
+            log.logNetworkError(error: NetworkError.invalidURL, taskOf: "\(String(describing: endpoint))", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+            return nil
+        }
+        log.logPostFinalURL(url: url, urlOf: "\(url)", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        do {
+            let jsonBody = try JSONEncoder().encode(type)
+            request.httpBody = jsonBody
+            log.logJsonEncode(jsonBody: jsonBody, taskOf: "\(String(describing: endpoint))", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+        } catch {
+            log.logNetworkError(error: NetworkError.unableToEncode, taskOf:  "\(url)", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+        }
+        let (data, response, error) = URLSession.shared.synchronousDataTask(urlrequest: request)
+        if let error = error {
+            log.logNetworkError(error: NetworkError.thrownError(error), taskOf:  "\(url)", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+        }
+        if let response = response as? HTTPURLResponse {
+            log.logPostResponseCode(response: response, taskOf: "\(url)", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+        }
+        guard let data = data else {
+            log.logNetworkError(error: NetworkError.noData, taskOf:  "\(url)", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+            return  nil
+        }
+        do {
+            let nReturnVal = try JSONDecoder().decode(T.self, from: data)
+            log.logJsonDecode(jsonBody: data, taskOf: "\(url)", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+            return nReturnVal
+        } catch {
+            log.logNetworkError(error: NetworkError.unableToDecode, taskOf:  "\(url)", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+            return nil
+        }
+    }
+}
+
+// MARK: - NetworkError
+enum NetworkError: LocalizedError {
+    case invalidURL
+    case thrownError(Error)
+    case noData
+    case unableToDecode
+    case unableToEncode
+    
+    var errorDescription: String {
+        switch self {
+        case .invalidURL:
+            return "---- invalidURL ----"
+        case .thrownError(let error):
+            return "---- thrownError(let error): \(error.localizedDescription) ----"
+        case .noData:
+            return "---- noData ----"
+        case .unableToDecode:
+            return "---- unableToDecode ----"
+        case .unableToEncode:
+            return "---- unableToEncode ----"
+        }
+    }
+    
+    var errorDescriptionToUsers: String {
+        switch self {
+        case .invalidURL:
+            return "The server failed to reach the necessary URL."
+        case .thrownError(let error):
+            return "There was an error, \n\(error.localizedDescription)"
+        case .noData:
+            return "The server failed to load any data."
+        case .unableToDecode:
+            return "There was an error when trying to load the data from the server."
+        case .unableToEncode:
+            return "There was an error when trying to save the data to the server"
+        }
+    }
+}
