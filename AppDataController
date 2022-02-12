@@ -1,0 +1,54 @@
+
+//  AppData.swift
+
+import Foundation
+import UIKit
+import ShipBookSDK
+
+enum AppBaseURL: String {
+    case DEV = "https://dev.m3ts.com"
+    case PROD = "https://services.m3ts.com"
+    // "https://dev.m3ts.com" ==>  rms00dev.ff36e36f93d1.database.windows.net
+    // "https://services.m3ts.com" ==> rms00paas.8f11fd23e833.database.windows.net ==> Use this for Production
+}
+
+class AppDataController {
+    static let shared = AppDataController()
+    let log = LogController.shared
+    let coreData = CoreDataController.shared
+    let defaults = UserDefaults.standard
+    let deviceId : String = UIDevice.current.identifierForVendor?.uuidString ?? "" // ==> unitId
+    let deviceManufacturer: String = "Apple"
+    let deviceModel : String = UIDevice.current.modelName
+    var operatorInfo: OperatorInformation?
+    var user: User?
+    var operatorId : String?
+    var username : String? // ==> userId
+    var propId: String?
+    var didUserLogout: Bool = false
+    var didEnterEnterForeground = false
+    var baseURL: String?
+    var environment: String = ""
+    var isRTVisible: Bool = false
+    var isVGTVisible: Bool = false
+    
+    // MARK: - setupAppData => To set up app data based on enviromen, use in AppDelegate, didFinished lunching
+    func setupAppData() {
+#if LOCAL
+        self.baseURL = AppBaseURL.DEV.rawValue
+        self.environment = "Local-Dev".uppercased()
+        ShipBook.start(appId:"620197c454e6bd7af86bf998", appKey: "2683268d04776ca666b3816a48ec8e62") //RMS-MOBILE-IOS-TST
+        self.log.enableLog()
+#elseif DEV
+        self.baseURL = AppBaseURL.DEV.rawValue
+        self.environment = "Dev".uppercased()
+        ShipBook.start(appId:"620197b8f4b7f5155c9161c3", appKey: "e9714cf814750df9fef4c3c9faf68b08") //RMS-MOBILE-IOS-DEV
+        self.log.enableLog()
+#elseif PROD
+        self.baseURL = AppBaseURL.PROD.rawValue
+        self.environment = "Prod".uppercased()
+        ShipBook.start(appId:"620197d731cddb3274275a81", appKey: "77ef029bfca9568ffc9da7742be92b0f") //RMS-MOBILE-IOS-PROD
+        self.log.disableLog()
+#endif
+    }
+}
