@@ -1,0 +1,34 @@
+
+//  AppMagicString.swift
+
+
+import Foundation
+
+struct AppMagicString {
+    // MARK: - StoryBoard ID String
+    // StoryBoard Names
+    static let mainStoryBoard = "Main"
+    static let loginViewStoryBoard = "Login"
+    
+    // MARK: - TruCom StoryBoard ID
+    static let homeStoryBoardIDVC = "HomeStoryBoardID"
+    static let userLoginStoryboardID = "UserLoginStoryboardID"
+ 
+    // MARK: - Nib Names
+    static let photoViewNib = "PhotoView"
+    
+    // MARK: - Fonts
+    static let appTitleLogoFont = "Verdana"
+    static let appFont = "Helvetica Neue"
+    
+    // MARK: - UI Image SystemName
+    static let imgSystemCircleFill = "circle.fill"
+    static let imgSearch = "magnifyingglass"
+    
+    // MARK: -  UserDefaults Key
+    static let keyHasAuthorizedBiometric = "hasAuthorizedBiometric"
+    static let keyUseBiometric = "useBiometric"
+    static let keyRememberLoginData = "rememberMe"
+    static let keyUsername = "username"
+    static let keyPassword = "password"
+}
