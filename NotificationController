@@ -1,0 +1,81 @@
+
+//  NotificationController.swift
+
+import Foundation
+import UserNotifications
+import Firebase
+
+// MARK: - Class
+class NotificationController {
+    static let shared = NotificationController()
+    let appData = AppDataController.shared
+    let log = LogController.shared
+    var showNotification = false
+    
+    // MARK: - Request User Authorization For Notification ==> To request user to authorize notification.
+    func requestUserAuthorizationForNotification() {
+        let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
+        UNUserNotificationCenter.current().requestAuthorization(options: authOptions) { hasAuthorized, error in
+            if let error = error {
+                LogController.shared.logError(error: error, errorMessage: "Request Authorization Notification", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+            }
+            if hasAuthorized {
+                LogController.shared.logInfo(message: "User has authorizied notification.", type: "", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+            } else {
+                LogController.shared.logInfo(message: "User did not authorizie notification.", type: "", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+            }
+        }
+    }
+    
+    // MARK: - Create Notification ==> when receive remote notification and save lastest notification in userDefaults
+    func createNotificationDataAndSaveInUserDefaults(userInfo: [AnyHashable : Any]) -> NotificationData {
+        var intOperatorId: Int?
+        var intPropertyId: Int?
+        if let operatorId = userInfo["operatorID"] as? String,
+           let propertyId = userInfo["propertyID"] as? String  {
+            intOperatorId = Int(operatorId)
+            intPropertyId = Int(propertyId)
+        }
+        let userId = userInfo["to"] as? String ?? ""
+        let title = userInfo["title"] as? String ?? ""
+        let message = userInfo["message"] as? String ?? ""
+        let sendFrom = userInfo["sendFrom"] as? String ?? ""
+        let referenceNo = userInfo["referenceNo"] as? String ?? ""
+        let notificationType = userInfo["notificationType"] as? String ?? ""
+        let action = userInfo["action"] as? String ?? ""
+        let show = userInfo["show"] as? String ?? ""
+        if show.lowercased() == "true" {
+            showNotification = true
+        } else {
+            showNotification = false
+        }
+        let newNotificationData = NotificationData(operatorId: intOperatorId, propertyId: intPropertyId, userId: userId, title: title, message: message, sendFrom: sendFrom, referenceNo: referenceNo, notificationType: notificationType, action: action, showNotification: showNotification)
+        saveLastestNoficationInUserDefaults(notification: newNotificationData)
+        log.logInfo(message: "Add NotificationData From Firebase", type: newNotificationData, at: "\(#line) --- OF \(#function) --- IN \(#file)")
+        return newNotificationData
+    }
+    
+    // MARK: - Subscribe To Topic on FireBase
+    func firebaseSubscribeTo(topic: String, atLocation : String) {
+        Messaging.messaging().subscribe(toTopic: topic) { [weak self] error in
+            if let error = error {
+                self?.log.logError(error: error, errorMessage: "Error Subscribe the firebase notification with topic : \(topic)", at: "\(atLocation)")
+            }
+            self?.log.logInfo(message: "Subscribe to firebase notification with topic : \(topic)", type: topic, at: "\(atLocation)")
+        }
+    }
+    
+    // MARK: - Send Notification when receieved data notification for didReceiveRemoteNotification
+    func sendNotificationNow(notificationData:  NotificationData) {
+        let content = UNMutableNotificationContent()
+        guard let title = notificationData.title,
+              let body = notificationData.message,
+              let id = notificationData.referenceNo else {
+                  log.logWarning(message: "Unable to unwrap title, body and id to send notification!", type: "title : \(String(describing: notificationData.title)), body : \(String(describing: notificationData.message)), id :\(String(describing: notificationData.referenceNo))", at: "\(#line) --- OF \(#function) --- IN \(#file)")
+                  return}
+        content.title = title
+        content.body = body
+        let req = UNNotificationRequest(identifier: id, content: content, trigger: nil) // trigger == nil ==> To send notification immediately
+        UNUserNotificationCenter.current().add(req, withCompletionHandler: nil)
+    }
+}
