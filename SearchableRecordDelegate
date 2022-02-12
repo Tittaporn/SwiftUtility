@@ -1,0 +1,54 @@
+
+// SearchableRecordDelegate.swift
+// Examples Of SearchableRecordDelegate
+
+import Foundation
+
+// MARK: - Search Protocol
+protocol SearchableRecordDelegate {
+    func matches(searchTerm: String, propertyId: String, propertyDesc: String) -> Bool
+}
+
+
+extension SearchableRecordDelegate {
+    func matches(searchTerm: String, propertyId: String, propertyDesc: String) -> Bool{
+        if  propertyDesc.lowercased().contains(searchTerm.lowercased()) {
+            return true
+        } else if propertyId.lowercased().contains(searchTerm.lowercased()) {
+            return true
+        }  else {
+            return false
+        }
+    }
+}
+
+// MARK: - SearchableStatusViewRecordDelegate
+protocol SearchableStatusViewRecordDelegate {
+    func matchesIdOrName(searchTerm: String, propertyId: String, locationName: String) -> Bool
+    func matchesStatus(searchTerm: Int, status: Int) -> Bool
+}
+
+extension SearchableStatusViewRecordDelegate {
+    func matchesIdOrName(searchTerm: String, propertyId: String, locationName: String) -> Bool{
+        if  locationName.lowercased().contains(searchTerm.lowercased()) {
+            return true
+        } else if propertyId.lowercased().contains(searchTerm.lowercased()) {
+            return true
+        } else {
+            return false
+        }
+    } 
+    // To Use ==>   
+    /* if searchTerm != "" {
+     searchedRTStatusList = dataSourceForSearching.filter{$0.matchesIdOrName(searchTerm: searchTerm, propertyId: $0.casinoID?.toString ?? "", locationName: $0.locationName ?? "")}
+     } */
+    
+    func matchesStatus(searchTerm: Int, status: Int) -> Bool{
+        if searchTerm == status {
+            return true
+        } else {
+            return false
+        }
+    }
+}
+
