@@ -1,0 +1,80 @@
+
+//  EndpointManager.swift
+
+
+import Foundation
+
+class EndpointManager {
+    // MARK: - Properties
+    static let shared = EndpointManager()
+    let log = LogController.shared
+    static let baseURL = WebserviceManger.baseURL + "/test"
+    
+    // Components
+    static let testComponent = "test"
+  
+    // Queries
+    static let queryDate = "Date"
+}
+
+enum  GetEndPoint {
+    static let baseURL = EndpointManager.baseURL
+    case test(operatorID: Int, locationId: Int, reportNumber: Int, userId: String, deviceId: String)
+  
+    var path: String {
+        switch self {
+        case .test(operatorID: _, locationId: _, reportNumber: _, userId: _, deviceId: _):
+            return EndpointManager.testComponent
+        }
+    }
+    
+    var queryItems: [URLQueryItem] {
+        var items: [URLQueryItem] = []
+        switch self {
+        case .test(operatorID: let operatorID, locationId: let locationId, reportNumber: let reportNumber, userId: let userId, deviceId: let deviceId):
+            let strOperatorID = String(operatorID)
+            let strLocationId = String(locationId)
+            let strReportNumber = String(reportNumber)
+            items.append(URLQueryItem(name: TenCoinDropFillRespositoryController.queryOperatorID, value: strOperatorID))
+            items.append(URLQueryItem(name: TenCoinDropFillRespositoryController.queryLocationID, value: strLocationId))
+            items.append(URLQueryItem(name: TenCoinDropFillRespositoryController.queryReportNumber, value: strReportNumber))
+            items.append(URLQueryItem(name: TenCoinDropFillRespositoryController.queryUserID, value: userId))
+            items.append(URLQueryItem(name: TenCoinDropFillRespositoryController.queryDeviceID, value: deviceId))
+            return items
+    
+    var url: URL? {
+        guard var url = URL(string: EndpointManager.baseURL) else { return nil }
+        url.appendPathComponent(path)
+        var nReturnURL: URL?
+        if !queryItems.isEmpty {
+            var components = URLComponents(url: url, resolvingAgainstBaseURL: true)
+            components?.queryItems = queryItems
+            nReturnURL = components?.url
+            LogController.shared.logURL(url: nReturnURL, urlOf: path, at: "\(#line) --- OF \(#function) --- IN \(#file)")
+        } else {
+            nReturnURL = url
+            LogController.shared.logURL(url: nReturnURL, urlOf: path, at: "\(#line) --- OF \(#function) --- IN \(#file)")
+        }
+        return nReturnURL
+    }
+}
+
+enum  PostEndPoint {
+    static let baseURL = EndpointManager.baseURL
+    case postTest
+    
+    var path: String {
+        switch self {
+        case .postTest:
+            return EndpointManager.postTestComponent
+    }
+    
+    var url: URL? {
+        guard var url = URL(string: EndpointManager.baseURL) else { return nil }
+        url.appendPathComponent(path)
+        var nReturnURL: URL?
+        nReturnURL = url
+        LogController.shared.logURL(url: nReturnURL, urlOf: path, at: "\(#line) --- OF \(#function) --- IN \(#file)")
+        return nReturnURL
+    }
+}
