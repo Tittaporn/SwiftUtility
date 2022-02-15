@@ -147,3 +147,223 @@ class LogController {
  log.v("the log message") // Verbose log
  ShipBook.screen(name: "SCREEN_NAME")
  */
+ 
+==============================================================================================================================================
+// LogController Version 2
+
+import Foundation
+import ShipBookSDK
+import UIKit
+
+class LogController {
+    static let shared = LogController()
+    var shipBook = ShipBook.getLogger("LogController")
+    var isLogDisable = false
+    
+    // MARK: - Helper Functions
+    func disableLog(){
+        isLogDisable = true
+    }
+    
+    func enableLog(){
+        isLogDisable = false
+    }
+    
+    private func getNewLacationForShipBook(at: String) -> String {
+        var nReturnVal: String = ""
+        let seperateFileFromLineAndFuntion = at.components(separatedBy: "--- IN")
+        if let lineAndFuction = seperateFileFromLineAndFuntion.first {
+            let seperateLineAndFuction = lineAndFuction.components(separatedBy: "--- OF")
+            if seperateLineAndFuction.count == 2 {
+                nReturnVal = "\(seperateLineAndFuction[1]) | \(seperateLineAndFuction[0])"
+            }
+        }
+        shipBook = ShipBook.getLogger(getClassForShipBook(at: at))
+        return nReturnVal
+    }
+    
+    private func getClassForShipBook(at: String) -> String {
+        var nReturnVal: String = ""
+        let seperateFileFromLineAndFuntion = at.components(separatedBy: "--- IN")
+        if seperateFileFromLineAndFuntion.count == 2 {
+            let file = seperateFileFromLineAndFuntion[1]
+            let seperateClass = file.components(separatedBy: "/")
+            if let classDotSwift = seperateClass.last {
+                let seperateClassFromSwift = classDotSwift.components(separatedBy: ".")
+                nReturnVal = seperateClassFromSwift.first ?? ""
+            }
+        }
+        return nReturnVal
+    }
+    
+    private func generic<T>(parameter: AnyObject, type: T.Type) -> Bool {
+        if parameter is T {
+            return true
+        } else {
+            return false
+        }
+    }
+    
+    private func getNewType<T>(type: T) -> String {
+        var nReturnVal = ""
+        let t : AnyObject = type as AnyObject
+        if generic(parameter: t, type: String.self) {
+            if let newT : String = t as? String {
+                if newT == "" {
+                    nReturnVal = ""
+                } else {
+                    nReturnVal = ": \(newT)"
+                }
+            }
+        } else {
+            nReturnVal =  ": \(type)"
+        }
+        return  nReturnVal
+    }
+    
+    // MARK: - Log Functions
+    func logLine<T>(message: String, type: T , at: String) {
+        let newLocationForShipBook = getNewLacationForShipBook(at: at)
+        let atClass = getClassForShipBook(at: at)
+        if isLogDisable == false {
+            print("\(Date()) | 📝 PRIVATE INFO | \(message) \(getNewType(type: type)) | \(newLocationForShipBook) | \(atClass) | \(AppDataController.shared.environment)")
+        }
+    }
+    
+    func logGetFinalURL(url: URL, urlOf: String, at: String) {
+        let newLocationForShipBook = getNewLacationForShipBook(at: at)
+        let atClass = getClassForShipBook(at: at)
+        if isLogDisable == false {
+            print("\(Date()) | 🌐 GET URL | \(urlOf) : \(url) | \(newLocationForShipBook) | \(atClass) | \(AppDataController.shared.environment)")
+        }
+    }
+    
+    func logGetResponseCode(response: HTTPURLResponse, taskOf: String, at: String) {
+        let newLocationForShipBook = getNewLacationForShipBook(at: at)
+        let atClass = getClassForShipBook(at: at)
+        if isLogDisable == false {
+            print("\(Date()) | 🌐 GET RESPONSE | \(taskOf) : \(response.statusCode) | \(newLocationForShipBook) | \(atClass) | \(AppDataController.shared.environment)")
+        }
+    }
+    
+    func logPostFinalURL(url: URL, urlOf: String, at: String) {
+        let newLocationForShipBook = getNewLacationForShipBook(at: at)
+        let atClass = getClassForShipBook(at: at)
+        if isLogDisable == false {
+            print("\(Date()) | 🌎 POST URL | \(urlOf) : \(url) | \(newLocationForShipBook) | \(atClass) | \(AppDataController.shared.environment)")
+        }
+    }
+    
+    func logURL(url: URL?, urlOf: String, at: String) {
+        let newLocationForShipBook = getNewLacationForShipBook(at: at)
+        let atClass = getClassForShipBook(at: at)
+        if isLogDisable == false {
+            print("\(Date()) | 🌐 URL | \(urlOf) : \(String(describing: url)) | \(newLocationForShipBook) | \(atClass) | \(AppDataController.shared.environment)")
+        }
+    }
+    
+    func logPostResponseCode(response: HTTPURLResponse, taskOf: String, at: String) {
+        let newLocationForShipBook = getNewLacationForShipBook(at: at)
+        let atClass = getClassForShipBook(at: at)
+        if isLogDisable == false {
+            print("\(Date()) | 🌎 POST RESPONSE | \(taskOf) : \(response.statusCode) | \(newLocationForShipBook) | \(atClass) | \(AppDataController.shared.environment)")
+        }
+    }
+    
+    func logJsonEncode(jsonBody: Data, taskOf: String, at: String) {
+        let newLocationForShipBook = getNewLacationForShipBook(at: at)
+        let atClass = getClassForShipBook(at: at)
+        if isLogDisable == false {
+            print("------------------------------------------------------------------------------")
+            print("\(Date()) | 🌎  ENCODE JSON | \(taskOf) : \(jsonBody) | \(newLocationForShipBook) | \(atClass) | \(AppDataController.shared.environment)")
+            print(String(data: jsonBody, encoding: .utf8)!)
+            print("------------------------------------------------------------------------------")
+        }
+    }
+    
+    func logJsonDecode(jsonBody: Data, taskOf: String, at: String) {
+        let newLocationForShipBook = getNewLacationForShipBook(at: at)
+        let atClass = getClassForShipBook(at: at)
+        if isLogDisable == false {
+            print("------------------------------------------------------------------------------")
+            print("\(Date()) | 🌐  DECODE JSON | \(taskOf) : \(jsonBody) | \(newLocationForShipBook) | \(atClass) | \(AppDataController.shared.environment)")
+            print(String(data: jsonBody, encoding: .utf8)!)
+            print("------------------------------------------------------------------------------")
+        }
+    }
+    
+    func logNetworkError(error: NetworkError, taskOf: String, at: String) {
+        let newLocationForShipBook = getNewLacationForShipBook(at: at)
+        let atClass = getClassForShipBook(at: at)
+        if isLogDisable == false {
+            print("\(Date()) | 🆘 NETWORK ERROR | \(error.errorDescription) ==> ERROR : \(error.localizedDescription) \(taskOf) | \(newLocationForShipBook) | \(atClass) | \(AppDataController.shared.environment)")
+        }
+        let shipBookError = "\(AppDataController.shared.environment) | NETWORK ERROR | \(newLocationForShipBook) -> \(error.errorDescription) - \(error.localizedDescription) of \(taskOf)"
+        shipBook.e(shipBookError)
+    }
+    
+    func logError(error: Error, errorMessage: String, at: String) {
+        let newLocationForShipBook = getNewLacationForShipBook(at: at)
+        let atClass = getClassForShipBook(at: at)
+        if isLogDisable == false {
+            print("\(Date()) | ❌ ERROR | \(errorMessage) : \(error.localizedDescription) | \(newLocationForShipBook) | \(atClass) | \(AppDataController.shared.environment)")
+        }
+        let shipBookError = "\(AppDataController.shared.environment) | ERROR | \(newLocationForShipBook) -> \(errorMessage) : \(error.localizedDescription)"
+        shipBook.e(shipBookError)
+    }
+    
+    // The warning for switch case and guard and if let.
+    func logWarning<T>(message: String, type: T , at: String) {
+        let newLocationForShipBook = getNewLacationForShipBook(at: at)
+        let atClass = getClassForShipBook(at: at)
+        if isLogDisable == false {
+            print("\(Date()) | ⚠️ WARN | \(message) \(getNewType(type: type)) | \(newLocationForShipBook) | \(atClass) | \(AppDataController.shared.environment)")
+        }
+        let shipBookError = "\(AppDataController.shared.environment) | WARN | \(newLocationForShipBook) -> \(message) \(getNewType(type: type))"
+        shipBook.w(shipBookError)
+    }
+    
+    func logSuccess<T>(message: String, type: T , at: String) {
+        let newLocationForShipBook = getNewLacationForShipBook(at: at)
+        let atClass = getClassForShipBook(at: at)
+        if isLogDisable == false {
+            print("\(Date()) | ✅ SUCCESS | \(message) \(getNewType(type: type))) | \(newLocationForShipBook) | \(atClass) | \(AppDataController.shared.environment)")
+        }
+        let shipBookInfo = "\(AppDataController.shared.environment) | SUCCESS | \(newLocationForShipBook) -> \(message) \(getNewType(type: type))"
+        shipBook.v(shipBookInfo)
+    }
+    
+    // To Log Delegates
+    func logVerbose<T>(message: String, type: T , at: String) {
+        let newLocationForShipBook = getNewLacationForShipBook(at: at)
+        let atClass = getClassForShipBook(at: at)
+        if isLogDisable == false {
+            print("\(Date()) | 🔄 DELEGATE | \(message) \(getNewType(type: type)) | \(newLocationForShipBook) | \(atClass) | \(AppDataController.shared.environment)")
+        }
+        let shipBookInfo = "\(AppDataController.shared.environment) | DEBUG | \(newLocationForShipBook) -> \(message) \(getNewType(type: type))"
+        shipBook.d(shipBookInfo)
+    }
+    
+    func logInfo<T>(message: String, type: T , at: String) {
+        let newLocationForShipBook = getNewLacationForShipBook(at: at)
+        let atClass = getClassForShipBook(at: at)
+        if isLogDisable == false {
+            print("\(Date()) | ✴️ INFO | \(message) \(getNewType(type: type)) | \(newLocationForShipBook) | \(atClass) | \(AppDataController.shared.environment)")
+        }
+        let shipBookInfo = "\(AppDataController.shared.environment) | INFO | \(newLocationForShipBook) -> \(message) \(getNewType(type: type))"
+        shipBook.i(shipBookInfo)
+    }
+}
+
+// MARK: - NOTE
+/*
+ https://docs.shipbook.io/ios
+ import ShipBookSDK
+ fileprivate let log = ShipBook.getLogger(MainViewController.self)
+ log.e("the log message") // Error log
+ log.w("the log message") // Warning log
+ log.i("the log message") // Info log
+ log.d("the log message") // Debug log
+ log.v("the log message") // Verbose log
+ ShipBook.screen(name: "SCREEN_NAME")
+ */
