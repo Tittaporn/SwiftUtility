@@ -38,6 +38,9 @@ class BiometricAuth {
             completion("Face ID / Touch ID not available")
             return
         }
+        // Adjust the title of cancel and enter passcode buttons on Face not Recognize Alert
+        context.localizedCancelTitle = "OK"
+        context.localizedFallbackTitle = "Try Face ID Again"
         context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: loginReason) { (success, evaluateError) in
             if success {
                 LogController.shared.logSuccess(message: "Authenticate User with Biometric!", type: "", at: "\(#line) --- OF \(#function) --- IN \(#file)")
